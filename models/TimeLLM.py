@@ -53,7 +53,7 @@ class Model(nn.Module):
                     trust_remote_code=True,
                     local_files_only=True,
                     config=self.llama_config,
-                    # load_in_4bit=True
+                    load_in_4bit=True
                 )
             except EnvironmentError:  # downloads model from HF is not already done
                 print("Local model files not found. Attempting to download...")
@@ -63,7 +63,7 @@ class Model(nn.Module):
                     trust_remote_code=True,
                     local_files_only=False,
                     config=self.llama_config,
-                    # load_in_4bit=True
+                    load_in_4bit=True
                 )
             try:
                 self.tokenizer = LlamaTokenizer.from_pretrained(

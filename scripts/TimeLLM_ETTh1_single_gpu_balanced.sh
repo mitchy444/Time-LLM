@@ -1,30 +1,34 @@
 #!/bin/bash
-# TimeLLM ETTh1 Single GPU Training Script - ULTRA FAST VERSION
-# Maximum speed optimizations - should reduce 133 hours to ~3-6 hours
+# TimeLLM ETTh1 Single GPU Training Script - BALANCED VERSION
+# Optimized for faster training while maintaining convergence
 
 model_name=TimeLLM
-train_epochs=20  # Increased from 10 - need more epochs for convergence
-learning_rate=0.001  # Reduced from 0.02 - was too high and preventing convergence
-llama_layers=20  # Increased from 16 - was too small for proper learning
+train_epochs=30  # Reduced from 100 but more than ultra-fast 10
+learning_rate=0.001  # Much lower than ultra-fast 0.02, but reasonable
+llama_layers=24  # Compromise between 32 (full) and 16 (ultra-fast)
 
 master_port=00097
 num_process=1
-# Larger batch size for faster training (adjust based on your GPU memory)
-batch_size=16
+batch_size=16  # Keep larger batch size for efficiency
 d_model=32
 d_ff=128
 
-comment='TimeLLM-ETTh1-SingleGPU-4bit-ULTRAFAST'
+comment='TimeLLM-ETTh1-SingleGPU-4bit-BALANCED'
 
 # WandB configuration
 use_wandb=true
 wandb_project="TimeLLM-Experiments"
 wandb_entity=""
-wandb_run_name="ETTh1-SingleGPU-4bit-ULTRAFAST-$(date +%Y%m%d_%H%M%S)"
+wandb_run_name="ETTh1-SingleGPU-4bit-BALANCED-$(date +%Y%m%d_%H%M%S)"
 
-# Train only the most important prediction length (96) first
-# You can add others later if needed
-# Add --seed <number> if you want reproducible results, otherwise weights will be randomized
+echo "Starting balanced training with convergence-friendly settings..."
+echo "Key differences from ultra-fast:"
+echo "  - Learning rate: 0.001 (vs 0.02 ultra-fast)"
+echo "  - Epochs: 30 (vs 10 ultra-fast)"
+echo "  - LLaMA layers: 24 (vs 16 ultra-fast)"
+echo "  - Sequence length: 512 (vs 256 ultra-fast)"
+echo "  - Patience: 10 (vs 5 ultra-fast)"
+
 accelerate launch --mixed_precision bf16 --main_process_port $master_port run_main.py \
   --task_name long_term_forecast \
   --is_training 1 \
@@ -56,4 +60,4 @@ accelerate launch --mixed_precision bf16 --main_process_port $master_port run_ma
   --wandb_run_name "${wandb_run_name}_pred96" \
   $([ -n "$wandb_entity" ] && echo "--wandb_entity $wandb_entity" || echo "")
 
-echo "Training completed! Check results before running additional prediction lengths."
+echo "Training completed! This balanced approach should converge properly."

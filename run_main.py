@@ -22,10 +22,11 @@ from utils.tools import del_files, EarlyStopping, adjust_learning_rate, vali, lo
 
 parser = argparse.ArgumentParser(description='Time-LLM')
 
-fix_seed = 2021
-random.seed(fix_seed)
-torch.manual_seed(fix_seed)
-np.random.seed(fix_seed)
+# Removed fixed seed for randomized initialization on each run
+# fix_seed = 2021
+# random.seed(fix_seed)
+# torch.manual_seed(fix_seed)
+# np.random.seed(fix_seed)
 
 # basic config
 parser.add_argument('--task_name', type=str, required=True, default='long_term_forecast',
@@ -35,7 +36,7 @@ parser.add_argument('--model_id', type=str, required=True, default='test', help=
 parser.add_argument('--model_comment', type=str, required=True, default='none', help='prefix when saving test results')
 parser.add_argument('--model', type=str, required=True, default='Autoformer',
                     help='model name, options: [Autoformer, DLinear]')
-parser.add_argument('--seed', type=int, default=2021, help='random seed')
+parser.add_argument('--seed', type=int, default=None, help='random seed (None for random initialization)')
 
 # data loader
 parser.add_argument('--data', type=str, required=True, default='ETTm1', help='dataset type')
@@ -106,6 +107,16 @@ parser.add_argument('--wandb_entity', type=str, default=None, help='wandb entity
 parser.add_argument('--wandb_run_name', type=str, default=None, help='wandb run name')
 
 args = parser.parse_args()
+
+# Handle seeding - allow for randomized weights on each run
+if args.seed is not None:
+    print(f"Using fixed seed: {args.seed}")
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+else:
+    print("Using random initialization (no fixed seed)")
+
 ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
 deepspeed_plugin = DeepSpeedPlugin(hf_ds_config='./ds_config_zero2.json')
 accelerator = Accelerator(kwargs_handlers=[ddp_kwargs], deepspeed_plugin=deepspeed_plugin)

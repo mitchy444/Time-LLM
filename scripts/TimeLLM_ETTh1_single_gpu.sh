@@ -51,8 +51,8 @@ accelerate launch --mixed_precision bf16 --main_process_port $master_port run_ma
   --model_comment $comment \
   --use_wandb \
   --wandb_project $wandb_project \
-  --wandb_entity $wandb_entity \
-  --wandb_run_name "${wandb_run_name}_pred96"
+  --wandb_run_name "${wandb_run_name}_pred96" \
+  $([ -n "$wandb_entity" ] && echo "--wandb_entity $wandb_entity" || echo "")
 
 accelerate launch --mixed_precision bf16 --main_process_port $master_port run_main.py \
   --task_name long_term_forecast \
@@ -81,8 +81,8 @@ accelerate launch --mixed_precision bf16 --main_process_port $master_port run_ma
   --model_comment $comment \
   --use_wandb \
   --wandb_project $wandb_project \
-  --wandb_entity $wandb_entity \
-  --wandb_run_name "${wandb_run_name}_pred192"
+  --wandb_run_name "${wandb_run_name}_pred192" \
+  $([ -n "$wandb_entity" ] && echo "--wandb_entity $wandb_entity" || echo "")
 
 accelerate launch --mixed_precision bf16 --main_process_port $master_port run_main.py \
   --task_name long_term_forecast \
@@ -112,8 +112,8 @@ accelerate launch --mixed_precision bf16 --main_process_port $master_port run_ma
   --model_comment $comment \
   --use_wandb \
   --wandb_project $wandb_project \
-  --wandb_entity $wandb_entity \
-  --wandb_run_name "${wandb_run_name}_pred336"
+  --wandb_run_name "${wandb_run_name}_pred336" \
+  $([ -n "$wandb_entity" ] && echo "--wandb_entity $wandb_entity" || echo "")
 
 accelerate launch --mixed_precision bf16 --main_process_port $master_port run_main.py \
   --task_name long_term_forecast \
@@ -142,5 +142,5 @@ accelerate launch --mixed_precision bf16 --main_process_port $master_port run_ma
   --model_comment $comment \
   --use_wandb \
   --wandb_project $wandb_project \
-  --wandb_entity $wandb_entity \
-  --wandb_run_name "${wandb_run_name}_pred720"
+  --wandb_run_name "${wandb_run_name}_pred720" \
+  $([ -n "$wandb_entity" ] && echo "--wandb_entity $wandb_entity" || echo "")

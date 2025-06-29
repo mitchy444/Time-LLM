@@ -14,3 +14,4 @@ sentencepiece==0.2.0
 mpi4py
 gdown 
 bitsandbytes
+wandb

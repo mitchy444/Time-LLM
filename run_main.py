@@ -5,6 +5,7 @@ from accelerate import DistributedDataParallelKwargs
 from torch import nn, optim
 from torch.optim import lr_scheduler
 from tqdm import tqdm
+import wandb
 
 from models import Autoformer, DLinear, TimeLLM
 
@@ -98,10 +99,26 @@ parser.add_argument('--use_amp', action='store_true', help='use automatic mixed 
 parser.add_argument('--llm_layers', type=int, default=6)
 parser.add_argument('--percent', type=int, default=100)
 
+# wandb config
+parser.add_argument('--use_wandb', action='store_true', help='use wandb for logging', default=False)
+parser.add_argument('--wandb_project', type=str, default='TimeLLM', help='wandb project name')
+parser.add_argument('--wandb_entity', type=str, default=None, help='wandb entity/team name')
+parser.add_argument('--wandb_run_name', type=str, default=None, help='wandb run name')
+
 args = parser.parse_args()
 ddp_kwargs = DistributedDataParallelKwargs(find_unused_parameters=True)
 deepspeed_plugin = DeepSpeedPlugin(hf_ds_config='./ds_config_zero2.json')
 accelerator = Accelerator(kwargs_handlers=[ddp_kwargs], deepspeed_plugin=deepspeed_plugin)
+
+# Initialize wandb if enabled and on main process
+if args.use_wandb and accelerator.is_local_main_process:
+    wandb.init(
+        project=args.wandb_project,
+        entity=args.wandb_entity,
+        name=args.wandb_run_name,
+        config=vars(args),
+        tags=[args.model, args.data, args.task_name]
+    )
 
 for ii in range(args.itr):
     # setting record of experiments
@@ -222,6 +239,17 @@ for ii in range(args.itr):
                 speed = (time.time() - time_now) / iter_count
                 left_time = speed * ((args.train_epochs - epoch) * train_steps - i)
                 accelerator.print('\tspeed: {:.4f}s/iter; left time: {:.4f}s'.format(speed, left_time))
+                
+                # Log to wandb
+                if args.use_wandb and accelerator.is_local_main_process:
+                    wandb.log({
+                        "train/loss_step": loss.item(),
+                        "train/epoch": epoch + 1,
+                        "train/step": epoch * train_steps + i + 1,
+                        "train/speed_per_iter": speed,
+                        "train/learning_rate": model_optim.param_groups[0]['lr']
+                    })
+                
                 iter_count = 0
                 time_now = time.time()
 
@@ -244,6 +272,19 @@ for ii in range(args.itr):
         accelerator.print(
             "Epoch: {0} | Train Loss: {1:.7f} Vali Loss: {2:.7f} Test Loss: {3:.7f} MAE Loss: {4:.7f}".format(
                 epoch + 1, train_loss, vali_loss, test_loss, test_mae_loss))
+        
+        # Log epoch metrics to wandb
+        if args.use_wandb and accelerator.is_local_main_process:
+            wandb.log({
+                "epoch": epoch + 1,
+                "train/loss_epoch": train_loss,
+                "val/loss": vali_loss,
+                "val/mae_loss": vali_mae_loss,
+                "test/loss": test_loss,
+                "test/mae_loss": test_mae_loss,
+                "train/epoch_time": time.time() - epoch_time,
+                "train/learning_rate_epoch": model_optim.param_groups[0]['lr']
+            })
 
         early_stopping(vali_loss, model, path)
         if early_stopping.early_stop:
@@ -268,3 +309,7 @@ if accelerator.is_local_main_process:
     path = './checkpoints'  # unique checkpoint saving path
     del_files(path)  # delete checkpoint files
     accelerator.print('success delete checkpoints')
+    
+    # Finish wandb run
+    if args.use_wandb:
+        wandb.finish()

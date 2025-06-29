@@ -17,6 +17,12 @@ d_ff=128
 
 comment='TimeLLM-ETTh1-SingleGPU-4bit'
 
+# WandB configuration
+use_wandb=true
+wandb_project="TimeLLM-Experiments"
+wandb_entity=""  # Leave empty or set your wandb username/team
+wandb_run_name="ETTh1-SingleGPU-4bit-$(date +%Y%m%d_%H%M%S)"
+
 # Optimized for 4-bit quantization: using bf16 mixed precision for better performance
 accelerate launch --mixed_precision bf16 --main_process_port $master_port run_main.py \
   --task_name long_term_forecast \
@@ -42,7 +48,11 @@ accelerate launch --mixed_precision bf16 --main_process_port $master_port run_ma
   --learning_rate $learning_rate \
   --llm_layers $llama_layers \
   --train_epochs $train_epochs \
-  --model_comment $comment
+  --model_comment $comment \
+  --use_wandb \
+  --wandb_project $wandb_project \
+  --wandb_entity $wandb_entity \
+  --wandb_run_name "${wandb_run_name}_pred96"
 
 accelerate launch --mixed_precision bf16 --main_process_port $master_port run_main.py \
   --task_name long_term_forecast \
@@ -68,7 +78,11 @@ accelerate launch --mixed_precision bf16 --main_process_port $master_port run_ma
   --learning_rate 0.02 \
   --llm_layers $llama_layers \
   --train_epochs $train_epochs \
-  --model_comment $comment
+  --model_comment $comment \
+  --use_wandb \
+  --wandb_project $wandb_project \
+  --wandb_entity $wandb_entity \
+  --wandb_run_name "${wandb_run_name}_pred192"
 
 accelerate launch --mixed_precision bf16 --main_process_port $master_port run_main.py \
   --task_name long_term_forecast \
@@ -95,7 +109,11 @@ accelerate launch --mixed_precision bf16 --main_process_port $master_port run_ma
   --learning_rate 0.001 \
   --llm_layers $llama_layers \
   --train_epochs $train_epochs \
-  --model_comment $comment
+  --model_comment $comment \
+  --use_wandb \
+  --wandb_project $wandb_project \
+  --wandb_entity $wandb_entity \
+  --wandb_run_name "${wandb_run_name}_pred336"
 
 accelerate launch --mixed_precision bf16 --main_process_port $master_port run_main.py \
   --task_name long_term_forecast \
@@ -121,4 +139,8 @@ accelerate launch --mixed_precision bf16 --main_process_port $master_port run_ma
   --learning_rate $learning_rate \
   --llm_layers $llama_layers \
   --train_epochs $train_epochs \
-  --model_comment $comment
+  --model_comment $comment \
+  --use_wandb \
+  --wandb_project $wandb_project \
+  --wandb_entity $wandb_entity \
+  --wandb_run_name "${wandb_run_name}_pred720"
